@@ -262,10 +262,11 @@ export default class Popup extends Component {
     return true
   }
 
-  setPopupStyle() {
+  setPopupStyle = () => {
     debug('setPopupStyle()')
     const context = this.getContext()
-    if ((!this.coords && !context) || !this.popupCoords) return
+    if (!context || !this.popupCoords) return
+    this.coords = context.getBoundingClientRect()
     let position = this.props.position
     let style = this.computePopupStyle(position)
     const { keepInViewPort } = this.props
@@ -343,7 +344,13 @@ export default class Popup extends Component {
     debug('handlePortalMount()')
     const { hideOnScroll } = this.props
 
-    if (hideOnScroll) eventStack.sub('scroll', this.hideOnScroll, { target: window })
+    if (hideOnScroll) {
+      eventStack.sub('scroll', this.hideOnScroll, { target: window })
+    } else {
+      eventStack.sub('resize', this.setPopupStyle, { target: window })
+      eventStack.sub('scroll', this.setPopupStyle, { target: window })
+    }
+
     if (this.getContext()) {
       this.setPopupStyle(this.props.position)
     }
@@ -354,7 +361,13 @@ export default class Popup extends Component {
     debug('handlePortalUnmount()')
     const { hideOnScroll } = this.props
 
-    if (hideOnScroll) eventStack.unsub('scroll', this.hideOnScroll, { target: window })
+    if (hideOnScroll) {
+      eventStack.unsub('scroll', this.hideOnScroll, { target: window })
+    } else {
+      eventStack.unsub('resize', this.setPopupStyle, { target: window })
+      eventStack.unsub('scroll', this.setPopupStyle, { target: window })
+    }
+
     _.invoke(this.props, 'onUnmount', e, this.props)
   }
 
